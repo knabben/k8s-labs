@@ -12,6 +12,9 @@ API machinery and map the react functions in each of the events.*
 
 [Persistent Volume](persistent-volume/README.md)
 
+[Security](security/README.md)
+
+[Scheduler](scheduler/README.md) 
 
 ## References
 
