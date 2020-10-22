@@ -19,24 +19,18 @@ A certificate policy - stating the PKI's requirements concerning it's procedures
 
 https://en.wikipedia.org/wiki/Public_key_infrastructure
 
-### Generating PKI with cfssl vs openssl
+## Component certificates
 
-Generate and usage, on the fly certificate change between components step by step
-https://github.com/cloudflare/cfssl
+todo(knabben): generate certificates
 
-### Signing
-
-https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
-
-### Component certificates
-
-Port 6443
-How to generate TLS cert and private keys to the API Server and accessing it.
+Port 6443 on API server, How to generate TLS cert and private keys to the API Server and access it.
 
 ```
 --tls-cert-file
 --tls-private-key-file
 --bind-address
+
+?
 
 Etcd
 APIServer
@@ -44,18 +38,98 @@ Kubelet
 Controller
 ```
 
-### Kubectl proxy
+## Signing
 
-Explanation of command usage and direct client certs pass
+The Certificates API enables automation of X.509 credential provisioning by
+providing a programmatic interface for clients of the Kubernetes API to request
+and obtain X.509 certificates from a Certificate Authority (CA)
 
-### Controller Certificate CA
+A CertificateSigningRequest (CSR) resource is used to requesty that a certificate
+be signed by a denoted signer, after which the request maybe approved or denied
+before finally being signed.
 
-approve | deny
+As a normal user I can generate my Private Key and a Certificate Signing Request
 
-### Controlling Access to the Kubernetes API
+Try with cfssl-newkey 
+
+```
+cat > user-csr.json <<EOF
+{
+  "CN": "user",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "NY",
+      "O": "system:user",
+      "OU": "K8s",
+      "ST": "NYC"
+    }
+  ]
+}
+EOF
+
+$ cfssl-newkey user-csr.json | cfssljson -bare admin
+$ cat user-csr.json | base64 | tr -d "\n"
+
+The result should go to bellow *spec.request*:
+```
+
+Create a new CertificateSigningRequest:
+
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: user
+spec:
+  groups:
+  - system:authenticated
+  request: LS0tLS1CRUdJTiBDRVJUS....
+  signerName: kubernetes.io/kube-apiserver-client
+  usages:
+  - client auth
+EOF
+```
+
+You can approve and view the certificate with:
+
+```
+NAME        AGE   SIGNERNAME                                    REQUESTOR                 CONDITION
+user        13s   kubernetes.io/kube-apiserver-client           kubernetes-admin          Pending
+
+$ kubectl certificate approve user
+certificatesigningrequest.certificates.k8s.io/user approved
+```
+
+https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
+
+
+## KubeConfig
+
+After the request is approved is possible to use the Private Key to access the Cluster.
+
+todo(knabben): certificate generation and set to access. 
+
+```
+```
+
+## Controlling Access to the Kubernetes API
 
 Human users and Kubernetes services accounts can be authorized for API access.
 When a request reaches the API, it goes through several stages.
+
+Kubernetes sometimes checks authorization for additional permissions using specialized verbs. For example:
+
+* PodSecurityPolicy - use verb on podsecuritypolicies resources in the policy API group.
+* RBAC - bind and escalate verbs on roles and clusterroles resources in the rbac.authorization.k8s.io API group.
+* Authentication - impersonate verb on users, groups, and serviceaccounts in the core API group, 
+and the userextras in the authentication.k8s.io API group.
+
 
 # Transport Security - TLS
 
@@ -85,12 +159,79 @@ ABAC / RBAC
 
 # RBAC
 
-https://kubernetes.io/docs/reference/access-authn-authz/authorization/
+The RBAC API declares four kinds of Kubernetes object: Role, ClusterRole, RoleBinding and ClusterRoleBinding. 
+You can describe objects, or amend them, using tools such as kubectl, just like any other Kubernetes object.
 
-# KubeConfig
+https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 
-? 
+### Role and Cluster Role 
 
-# Cluster Role and Cluster Role Binding
+A Role always sets permissions within a particular namespace; when you create a Role, 
+you have to specify the namespace it belongs in.
 
-?
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: role-pod
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+ ```
+ 
+ClusterRole, by contrast, is a non-namespaced resource. The resources have different names
+(Role and ClusterRole) because a Kubernetes object always has to be either namespaced 
+or not namespaced; it can't be both.
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secret-reader
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+```
+
+### Role Binding and Cluster Role Binding
+
+To bind the role or the cluster role you need a binding object for the example
+
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pod-binding
+  namespace: default
+subjects:
+- kind: User
+  name: user
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role #this must be Role or ClusterRole
+  name: role-pod
+  apiGroup: rbac.authorization.k8s.io
+```
+
+And for a non-namespaced example:
+
+```
+# This cluster role binding allows anyone in the "manager" group to read secrets in any namespace.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: read-secrets-global
+subjects:
+- kind: Group
+  name: manager
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: secret-reader
+  apiGroup: rbac.authorization.k8s.io
+```
