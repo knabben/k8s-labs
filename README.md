@@ -16,6 +16,8 @@ API machinery and map the react functions in each of the events.*
 
 [Scheduler](scheduler/README.md) 
 
+[Networking](networking/README.md) 
+
 ## References
 
 [Process Mining](https://www.amazon.com/Primer-Process-Mining-SpringerBriefs-Information/dp/3030418189/ref=sr_1_1?dchild=1&keywords=a+primer+on+process+mining&qid=1601772470&sr=8-1)
