@@ -45,6 +45,15 @@ net-script.conf
 
 ## CoreDNS
 
+## Kube-Proxy
+
+Watch services and endpoints. Links endpoints (backends) with Services (frontends).
+Consider client affinity if requested.
+
+The Kube-proxy runs on each node (as DaemonSet). This reflects services as defined in the Kubernetes API on
+each node and can do simple TCP/UDP and SCTP stream forwarding or round-robin TCP/UDP and SCTP forwarding
+across a set  of backends. Options to this service are eBPF on CNI likes Cillium. 
+
 ## Services
 
 A very good descriptions on how Pod and Services are binding to Endpoints and how this
@@ -56,8 +65,6 @@ from [Kubernetes Networking Intro and Deep-Dive - Bowei Du & Tim Hockin](https:/
 
 ## Ingress
 
-### Default nginx ingress
+### Nginx ingress controller
 
-Deployment spec
-
-### Ingress controllers
+https://kubernetes.github.io/ingress-nginx/
