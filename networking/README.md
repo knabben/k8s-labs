@@ -16,7 +16,9 @@ have to know how to find each other.
 Every POD gets it's own IP address. This means you do not need to explicitly create links between Pods and you
 almost never need to deal with mapping containers ports to host ports.
 
-## Namespaces and networking
+All Pods can reach all other Pods, across Nodes.
+
+## Kernel namespaces and networking
 
 The IP per Pod approach is implemented by the runtime, but uses [kernel namespaces](https://blog.scottlowe.org/2013/09/04/introducing-linux-network-namespaces/)
 with this you can have different and separated instances of the network interfaces and routing tables that operate
@@ -31,23 +33,31 @@ ip netns exec blue ip addr add 10.1.1.1/24 dev veth1
 ip netns exec blue ip link set dev veth1 up
 ```
 
-## Bridge
-
-?
-
 ## CNI and Pods network
-
-There are a number of ways that this network model can be implemented
 
 net-script.conf
 
 ### ipam configuration
 
-## DHCP
-## host-local
+### DHCP
+### host-local
+### Kubelet CNI
+
+## CoreDNS
 
 ## Services
 
-### NodePort
+A very good descriptions on how Pod and Services are binding to Endpoints and how this
+proxy can keep the reliability of connections on Node or Pod downtime.
 
-## CoreDNS
+![Services](images/services.png)
+
+from [Kubernetes Networking Intro and Deep-Dive - Bowei Du & Tim Hockin](https://www.youtube.com/watch?v=tq9ng_Nz9j8)
+
+## Ingress
+
+### Default nginx ingress
+
+Deployment spec
+
+### Ingress controllers
