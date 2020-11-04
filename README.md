@@ -1,11 +1,13 @@
 # K8S Labs
 
-The goal of this repo is to archive notes and comments about Kubernetes parts.
+The goal of this repo is to archive notes and comments about Kubernetes parts. These notes
+are a compilation from source code comments, lectures or any related material with the topic
+in discussion.
 
 This jupyter notebook on root contains a few analysis functions based on process
 mining techniques to help understand and dig deeper into the Kubernetes source code.
 
-*To simplify no informer or callbacks initiators are tracker, it still possible to abstract the
+*To simplify no informer or callbacks initiators are tracked, it still possible to abstract the
 API machinery and map the react functions in each of the events.*
 
 ## Topics
