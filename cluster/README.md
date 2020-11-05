@@ -53,11 +53,54 @@ The inverse uncordon process mark node as schedulable again.
 
 ## Kubeadm Upgrade
 
-### kubeadm upgrade plan
-### kubeadm upgrade apply
+https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/
 
-## Etcd Upgrade
+kubeadm upgrade is a user-friendly command that wraps complex upgrading logic behind one command, 
+with support for both planning an upgrade and actually performing it.
 
-### backup
-### restore
+The following tasks guides in the cluster upgrade processs
 
+https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+
+## Etcd backup/restore
+
+Etcd (latest on 3.4.13) is the default Kubernetes storage, it's possible to backup and restore
+a cluster.
+
+To initialize a backup you can use an already setup certification PKI, and dump the
+data in a backup file:
+
+```
+etcdctl snapshot save \
+    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+    --cert=/etc/kubernetes/pki/apiserver-etcd-client.crt \
+    --key=/etc/kubernetes/pki/apiserver-etcd-client.key \ 
+    /tmp/backup_folder
+    
+```
+
+In an emergency case it's possible to restore 
+
+```
+etcdctl snapshot restore \
+    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+    --cert=/etc/kubernetes/pki/apiserver-etcd-client.crt \
+    --key=/etc/kubernetes/pki/apiserver-etcd-client.key /tmp/backup_folder \ 
+    --data-dir=/tmp/backup_folder
+```
+
+If installed with Kubeadm, use the Etcd Kubernetes manifest to point to the new data-dir:
+
+```
+spec:
+  containers:
+  - command:
+    - etcd
+    - --advertise-client-urls=https://172.18.0.2:2379
+    - --cert-file=/etc/kubernetes/pki/etcd/server.crt
+    - --client-cert-auth=true
+    - --data-dir=/tmp/restore
+```
+  
+
+https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#backing-up-an-etcd-cluster
