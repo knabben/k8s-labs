@@ -26,13 +26,30 @@ will make the node schedulable again.
 
 ![Workflow](http://kubernetes.io/images/docs/kubectl_drain.svg)
 
-### kubectl cordon
+### kubectl cordon & uncordon
 
-Mark node as unschedulable
+Mark node as unschedulable, this should patch the Pod with:
+ 
+```
+{"spec":{"unschedulable":true}}
+```
 
-### kubectl uncordon
+Apply taints from Node Lifecycle Controller: 
 
-Mark node as schedulable
+```
+  spec:
+    podCIDR: 10.244.0.0/24
+    podCIDRs:
+    - 10.244.0.0/24
+    providerID: kind://docker/kind/kind-control-plane
+    taints:
+    - effect: NoSchedule
+      key: node.kubernetes.io/unschedulable
+      timeAdded: "2020-11-05T00:05:10Z"
+    unschedulable: true
+```
+
+The inverse uncordon process mark node as schedulable again.
 
 ## Kubeadm Upgrade
 
