@@ -18,3 +18,8 @@ gcloud -q compute firewall-rules delete \
 
   gcloud -q compute networks delete kubernetes-the-hard-way
 }
+
+rm -f *.kubeconfig
+rm -f *.csr
+rm -f *.pem
+rm -f *.json
