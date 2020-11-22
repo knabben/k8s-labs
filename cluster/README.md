@@ -62,6 +62,31 @@ The following tasks guides in the cluster upgrade processs
 
 https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 
+## Kubelet Upgrade
+
+The last step is to upgrade Kubelet after the control plane, both on
+master and workers, find the version of Kubelet you want to upgrade
+(lets say v1.18.12) and use:
+ 
+```
+sudo apt-mark hold kubelet
+sudo apt-get install kubelet==1.18.12-00
+
+sudo apt-mark hold kubectl
+sudo apt-get install kubectl==1.18.12-00
+```
+
+Check the version installed with:
+
+```
+$ kubectl get nodes
+NAME                 STATUS   ROLES    AGE   VERSION
+kind-control-plane   Ready    master   6d    v1.18.12
+kind-worker          Ready    <none>   6d    v1.18.12
+
+sudo apt-mark unhold kubelet kubectl
+```
+
 ## Etcd backup/restore
 
 Etcd (latest on 3.4.13) is the default Kubernetes storage, it's possible to backup and restore
