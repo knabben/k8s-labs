@@ -58,11 +58,19 @@ https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/
 kubeadm upgrade is a user-friendly command that wraps complex upgrading logic behind one command, 
 with support for both planning an upgrade and actually performing it.
 
-The following tasks guides in the cluster upgrade processs
+The following tasks guides in the cluster upgrade proccess:
 
 https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 
+
+
 ## Kubelet Upgrade
+
+First drain the worker 
+
+```
+kubectl drain <worker> --ignore-daemonsets
+```
 
 The last step is to upgrade Kubelet after the control plane, both on
 master and workers, find the version of Kubelet you want to upgrade
@@ -100,7 +108,7 @@ etcdctl snapshot save \
     --cacert=/etc/kubernetes/pki/etcd/ca.crt \
     --cert=/etc/kubernetes/pki/apiserver-etcd-client.crt \
     --key=/etc/kubernetes/pki/apiserver-etcd-client.key \ 
-    /tmp/backup_folder
+    /tmp/backup.db
     
 ```
 
@@ -110,7 +118,7 @@ In an emergency case it's possible to restore
 etcdctl snapshot restore \
     --cacert=/etc/kubernetes/pki/etcd/ca.crt \
     --cert=/etc/kubernetes/pki/apiserver-etcd-client.crt \
-    --key=/etc/kubernetes/pki/apiserver-etcd-client.key /tmp/backup_folder \ 
+    --key=/etc/kubernetes/pki/apiserver-etcd-client.key /tmp/backup.db \ 
     --data-dir=/tmp/backup_folder
 ```
 
@@ -127,5 +135,4 @@ spec:
     - --data-dir=/tmp/restore
 ```
   
-
 https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#backing-up-an-etcd-cluster
