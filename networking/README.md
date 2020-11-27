@@ -38,7 +38,6 @@ ip netns exec blue ip link set dev veth1 up
 net-script.conf
 
 ### ipam configuration
-
 ### DHCP
 ### host-local
 ### Kubelet CNI
@@ -65,6 +64,89 @@ from [Kubernetes Networking Intro and Deep-Dive - Bowei Du & Tim Hockin](https:/
 
 ## Ingress
 
+https://kubernetes.io/docs/tasks/access-application-cluster/ingress-minikube/
+
+It's necessary to install an ingress controller, otherwise the object has no effect:
+
+```
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example-ingress
+spec:
+  rules:
+  - host: hello-world.info
+    http:
+      paths:
+      - backend:
+          serviceName: web
+          servicePort: 8080
+        path: /
+        pathType: Prefix
+```
+
+A default backend capable of servicing requests that don't match any rule, can be set
+on `ingress.spec.backend`.
+
+You can set rules that match a host, a path and forward the request to a particular
+service.
+
+In this case, setup a Pod and service like:
+
+```
+kubectl create deployment web --image=gcr.io/google-samples/hello-app:1.0
+kubectl expose deployment web --type=NodePort --port=8080
+```
+
 ### Nginx ingress controller
 
 https://kubernetes.github.io/ingress-nginx/
+
+Install the controller on Kind. We are going to use the NodePort of the service to test 
+and evalutate the ingress.
+
+```
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.41.2/deploy/static/provider/baremetal/deploy.yaml
+
+$ kubectl -n ingress-nginx get pods
+NAME                                        READY   STATUS      RESTARTS   AGE
+ingress-nginx-admission-create-p7x8t        0/1     Completed   0          28m
+ingress-nginx-admission-patch-lsd87         0/1     Completed   0          28m
+ingress-nginx-controller-5dbd9649d4-v7c6f   1/1     Running     0          28m
+```
+
+Install the Krew plugin and test the created ingress:
+
+```
+$ kubectl ingress-nginx ingresses
+INGRESS NAME      HOST+PATH           ADDRESSES    TLS   SERVICE   SERVICE PORT   ENDPOINTS
+example-ingress   hello-world.info/   172.18.0.2   NO    web       8080           1
+```
+
+Create a /etc/hosts with the hostname set in the rules:
+
+```
+172.18.0.2 hello-world.info
+```
+
+Check the NodePort (this could be behind a cloud LB for example): 
+
+```
+$ kubectl get -n ingress-nginx svc
+NAME                                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             NodePort    10.98.143.84     <none>        80:31681/TCP,443:30372/TCP   37m
+ingress-nginx-controller-admission   ClusterIP   10.108.111.200   <none>        443/TCP                      37m
+```
+
+While hitting the host, check the logs in the Nginx: 
+
+```
+$ curl http://hello-world.info:31681
+Hello, world!
+Version: 1.0.0
+Hostname: web-79d88c97d6-l58df
+
+$ kubectl ingress-nginx -n ingress-nginx logs -f
+...
+10.244.0.1 - - [27/Nov/2020:23:37:23 +0000] "GET / HTTP/1.1" 200 60 "-" "curl/7.64.0" 86 0.001 [default-web-8080]
+```
