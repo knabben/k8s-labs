@@ -22,6 +22,9 @@ spec:
       memory: 128Mi
       cpu: 0.5
     type: Container
+  - max:
+      storage: 1Gi
+    type: PersistentVolumeClaim
 ```
 
 Check the default limits for a new pod:
@@ -30,6 +33,16 @@ Check the default limits for a new pod:
 kubectl -n control-ns get pod -o jsonpath='{.items[].spec.containers[].resources}'
 {"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"500m","memory":"128Mi"}}
 ````
+
+## PersistentVolumeClaim
+
+When trying to get a PVC with 3Gi, an error is raised:
+
+```
+kubectl -n control-ns create -f pvc.yaml
+Error from server (Forbidden): error when creating "pvc.yaml": persistentvolumeclaims "task-pv-claim" is forbidden:
+maximum storage usage per PersistentVolumeClaim is 1Gi, but request is 3Gi
+```
 
 ## ResourceQuotas
 
