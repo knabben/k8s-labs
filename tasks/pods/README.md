@@ -1,4 +1,6 @@
-## InitContainers
+## Pod lifecycle
+
+### InitContainers
 
 ```
 apiVersion: v1
@@ -59,3 +61,46 @@ if container := podContainerChanges.NextInitContainerToStart; container != nil {
     klog.V(4).Infof("Completed init container %q for pod %q", container.Name, format.Pod(pod))
 }
 ``` 
+
+### Lifecycle hooks
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lifecycle-demo
+spec:
+  containers:
+  - name: lifecycle-demo-container
+    image: nginx
+    lifecycle:
+      postStart:
+        exec:
+          command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+      preStop:
+        exec:
+          command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
+```
+
+On Step 2, start the `PreStartContainer`:
+
+```
+err = m.internalLifecycle.PreStartContainer(pod, container, containerID)
+if err != nil {
+    s, _ := grpcstatus.FromError(err)
+    m.recordContainerEvent(pod, container, containerID, v1.EventTypeWarning, events.FailedToStartContainer, "Internal PreStartContainer hook failed: %v", s.Message())
+    return s.Message(), ErrPreStartHook
+}
+m.recordContainerEvent(pod, container, containerID, v1.EventTypeNormal, events.CreatedContainer, fmt.Sprintf("Created container %s", container.Name))
+```
+
+On `computePodActions`, run the post-stop:
+
+```
+if containerStatus != nil && containerStatus.State != kubecontainer.ContainerStateRunning {
+    if err := m.internalLifecycle.PostStopContainer(containerStatus.ID.ID); err != nil {
+        klog.Errorf("internal container post-stop lifecycle hook failed for container %v in pod %v with error %v",
+            container.Name, pod.Name, err)
+    }
+} 
+```
