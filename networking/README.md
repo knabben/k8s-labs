@@ -150,3 +150,67 @@ $ kubectl ingress-nginx -n ingress-nginx logs -f
 ...
 10.244.0.1 - - [27/Nov/2020:23:37:23 +0000] "GET / HTTP/1.1" 200 60 "-" "curl/7.64.0" 86 0.001 [default-web-8080]
 ```
+
+### Configuration lifecycle
+
+In the following situations it requires a reload of the Nginx config:
+
+* New Ingress Resource Created.
+* TLS section is added to existing Ingress.
+* Change in Ingress annotations that impacts more than just upstream configuration. For instance load-balance annotation does not require a reload.
+* A path is added/removed from an Ingress.
+* An Ingress, Service, Secret is removed.
+* Some missing referenced object from the Ingress is available, like a Service or Secret.
+* A Secret is updated.
+
+```
+I1128 00:09:15.685139       7 main.go:112] "successfully validated configuration, accepting" ingress="example-ingress/default"
+I1128 00:09:15.691424       7 controller.go:144] "Configuration changes detected, backend reload required"
+I1128 00:09:15.696619       7 event.go:282] Event(v1.ObjectReference{Kind:"Ingress", Namespace:"default", Name:"example-ingress", UID:"5e0e9c07-36db-4239-996e-e80775cdc9ed", APIVersion:"networking.k8s.io/v1beta1", ResourceVersion:"13399", FieldPath:""}): type: 'Normal' reason: 'Sync' Scheduled for sync
+I1128 00:09:15.784427       7 controller.go:161] "Backend successfully reloaded"
+I1128 00:09:15.785404       7 event.go:282] Event(v1.ObjectReference{Kind:"Pod", Namespace:"ingress-nginx", Name:"ingress-nginx-controller-5dbd9649d4-v7c6f", UID:"6c3a34d1-c812-4a8f-b215-cff2f01b78a8", APIVersion:"v1", ResourceVersion:"1534", FieldPath:""}): type: 'Normal' reason: 'RELOAD' NGINX reload triggered due to a change in configuration
+```
+
+Upstream servers are handled by lua, according the `nginx.conf` template:
+
+```
+upstream upstream_balancer {
+  server 0.0.0.1:1234; # placeholder
+
+  balancer_by_lua_block {
+    tcp_udp_balancer.balance()
+  }
+}
+```
+
+#### Backend servers does not requires a reload
+
+https://kubernetes.github.io/ingress-nginx/how-it-works/#avoiding-reloads-on-endpoints-changes
+
+Then for every request Lua code running in balancer_by_lua context detects what endpoints it should
+choose upstream peer from and applies the configured load balancing algorithm to choose the peer. 
+Then Nginx takes care of the rest.
+
+Resize your deploy and check the Backends with the Ingress plugin.
+
+``` 
+$ kubectl scale deploy/web --replicas=0
+$ kubectl scale deploy/web --replicas=3
+
+$ kubectl ingress-nginx -n ingress-nginx backends | jq ".[].endpoints"
+
+[
+  {
+    "address": "10.244.0.15",
+    "port": "8080"
+  },
+  {
+    "address": "10.244.0.16",
+    "port": "8080"
+  },
+  {
+    "address": "10.244.0.17",
+    "port": "8080"
+  }
+]
+```
