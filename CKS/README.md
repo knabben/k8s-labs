@@ -1,6 +1,7 @@
 # CKS
 
 I'm using Kind with the following script to setup the required hosts and CNI:
+
 https://github.com/jayunit100/k8sprototypes/blob/master/kind/kind-local-up.sh
 
 ## Minimize Microservice Vulnerabilities
@@ -72,11 +73,12 @@ Multiple containers can have different settings and profiles.
 
 #### Manage Kubernetes secrets
 
-base64 foo
+base64 data foo and ETCD encryption
 
 * https://kubernetes.io/docs/concepts/configuration/secret/
 * https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/
 * https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-config-file/
+  https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
 
 ### Use container runtime sandboxes in multi-tenant environments (gvisor, kata containers)
 
