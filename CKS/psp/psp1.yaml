@@ -15,4 +15,4 @@ spec:
   volumes:
   - '*'
   allowPrivilegeEscalation: false
-  privileged: false  # Don't allow privileged pods!
+  privileged: false
