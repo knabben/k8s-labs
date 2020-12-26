@@ -48,9 +48,29 @@ The policy can be enforced to a specific user or SA via RBAC.
 
 #### OPA - *Open Policy Agent*
 
-* OPA Gatekeeper
-* OPA Playground
-* Rego
+OPA is an open source policy engine that allows policy enforcement in Kubernetes.  Uses a custom language called *Rego*.
+
+* [OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
+
+OPA uses an admission controller that is a piece of code that intercepts requests to the Kubernetes API server
+prior to persistence of the object.
+
+* https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
+
+Practical exercises with Gatekeeper
+
+* https://katacoda.com/austinheiman/scenarios/open-policy-agent-gatekeeper
+* https://www.openpolicyagent.org/docs/latest/kubernetes-primer/
+* https://www.openpolicyagent.org/docs/latest/kubernetes-tutorial/
+
+* templates.gatekeeper.sh/v1beta1
+* constraints.gatekeeper.sh/v1beta1
+
+*Other References*
+
+* https://www.youtube.com/watch?v=ZJgaGJm9NJE
+* https://www.youtube.com/watch?v=RDWndems-sk
+* https://play.openpolicyagent.org
 
 #### Pod Security Contexts
 
