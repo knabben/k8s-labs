@@ -209,9 +209,13 @@ Output
 
 ### Use static analysis of user workloads (e.g. kubernetes resources, docker files)
 
+* [trivy](https://github.com/aquasecurity/trivy)
+
+* [Anchore](https://github.com/anchore/anchore-engine)
+
 ### Scan images for known vulnerabilities
 
-
+* [clair](https://quay.github.io/clair/)
 
 ## Monitoring, Logging and Runtime Security
 
