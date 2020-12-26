@@ -34,7 +34,7 @@ attributes of pod specification relevant to security.
 
 To enable the PSP we must enable the admission plugin in the [kube-apiserver](psp/kube-apiserver-psp.yaml) manifest.
 
-NOTE: Add a PSP before enabling the adminission plugin
+NOTE: Add a PSP before enabling the admission plugin
 
 * https://kubernetes.io/docs/concepts/policy/pod-security-policy/
 * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#podsecuritypolicy-v1beta1-policy
