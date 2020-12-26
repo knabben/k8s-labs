@@ -220,7 +220,13 @@ Output
 ## Monitoring, Logging and Runtime Security
 
 ### Perform behavioral analytics of syscall process and file activities at the host and container level to detect malicious activies
+
+* [Falco](https://falco.org/docs/)
+
 ### Detect threats within physical infrastructure, apps, networks, data, users and workloads
+
+IDS/NIDS
+
 ### Detect all phases of attach regardless where it occours and how it spreads
 ### Perform deep analytics investigation and identification of bad actors whitin environment
 ### Ensure immutability of containers at runtime
@@ -244,7 +250,22 @@ Output
 ## System Hardening
 
 ### Minimize host OS footprint (reduce attack surface)
+
+* https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/#preventing-containers-from-loading-unwanted-kernel-modules
+* CIS_Debian_Linux_10_Benchmark_v1.0.0.pdf
+
 ### Minimize IAM roles
+
+[IAM](https://github.com/kubernetes-sigs/security-profiles-operator) on AWS machines
+
 ### Minimize external access to the network
+
+* Firewall (iptables)
+* Egress Netpol Deny ALL ACL
+* https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/#restricting-network-access
+
 ### Appropriately use kernel hardening tools such as AppArmor, seccomp
 
+* https://kubernetes.io/docs/tutorials/clusters/seccomp/
+* https://kubernetes.io/docs/tutorials/clusters/apparmor/
+* https://github.com/kubernetes-sigs/security-profiles-operator
