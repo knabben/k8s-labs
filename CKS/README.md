@@ -7,6 +7,7 @@ I'm using Kind with the following [script](https://github.com/jayunit100/k8sprot
 * [Monitoring, Logging and Runtime Security](./MON_SEC.md)
 * [Cluster Setup](./CLUSTER_SETUP.md)
 * [Cluster Hardening](./CLUSTER_HARDENING.md)
+* [System Hardening](./SYSTEM_HARDENING.md)
 
 ### References 
 
