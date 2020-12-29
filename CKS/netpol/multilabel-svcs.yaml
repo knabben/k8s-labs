@@ -1,0 +1,14 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: multi-label-allow
+spec:
+  podSelector:
+    matchLabels:
+      pod: a
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          pod: b
+          team: b
