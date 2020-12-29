@@ -9,6 +9,16 @@ I'm using Kind with the following [script](https://github.com/jayunit100/k8sprot
 * [Cluster Hardening](./CLUSTER_HARDENING.md)
 * [System Hardening](./SYSTEM_HARDENING.md)
 
+### Allowed access
+
+* https://kubernetes.io/docs/ and their subdomains
+* https://github.com/kubernetes/ and their subdomains
+* https://kubernetes.io/blog/ and their subdomains
+* Trivy documentation: https://github.com/aquasecurity/trivy
+* Sysdig documentation: https://docs.sysdig.com/
+* Falco documentation: https://falco.org/docs/
+* AppArmor documentation: https://gitlab.com/apparmor/apparmor/-/wikis/Documentation
+
 ### References 
 
 * https://killer.sh/

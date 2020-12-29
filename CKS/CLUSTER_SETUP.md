@@ -319,11 +319,104 @@ References:
 
 ### Properly set up Ingress objects with security control (TLS)
 
+Using the default example from GCE-GKE installation, we are going to create a certificate for `thefind.live`.
+
+```
+Target service:
+
+$ kubectl run nginx --image=nginx
+$ kubectl expose pod/nginx --port 80 
+
+Lets create a new Ingress pointing to this service:
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: nginx-ing
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx
+            port:
+              number: 80
+
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.42.0/deploy/static/provider/cloud/deploy.yaml
+```
+
+On Services & Ingress you can see your controller, with two IP/Port enabled, for now no Ingress is created yet,
+lets try the TLS 443 port and see what certificate this is using:
+
+``` 
+$ curl -v https://172.18.0.2:31000 -k
+...
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
+* ALPN, server accepted to use h2
+* Server certificate:
+*  subject: O=Acme Co; CN=Kubernetes Ingress Controller Fake Certificate
+*  start date: Dec 29 20:15:22 2020 GMT
+*  expire date: Dec 29 20:15:22 2021 GMT
+*  issuer: O=Acme Co; CN=Kubernetes Ingress Controller Fake Certificate
+*  SSL certificate verify result: unable to get local issuer certificate (20), continuing anyway.
+...
+< HTTP/2 202
+!DOCTYPE html>
+<html>
+...
+```
+
+The regular ingress is working, lets add a TLS with custom keys and certs. Create a TLS secret with `CN/O=https-thefind.live`: 
+
+```
+$ kubectl create secret tls cert --key out.key --cert out.crt
+
+NAME   TYPE                DATA   AGE
+cert   kubernetes.io/tls   2      8s
+```
+
+Reapply the ingress: 
+```
+spec:
+  tls:
+  - hosts:
+    - https-thefind.live
+    secretName: cert
+  rules:
+  - host: https-thefind.live
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx
+            port:
+              number: 80
+```
+
+Test again adding the proper host in the /etc/hosts:
+
+```
+$ curl -v https://thefind.live:31000 -kv
+...
+* Server certificate:
+*  subject: C=AU; ST=Some-State; O=thefind.live; OU=thefind.live; CN=thefind.live
+*  start date: Dec 29 21:00:42 2020 GMT
+*  expire date: Dec 29 21:00:42 2021 GMT
+*  issuer: C=AU; ST=Some-State; O=thefind.live; OU=thefind.live; CN=thefind.live
+*  SSL certificate verify result: self signed certificate (18), continuing anyway.
+...
+```
+
 * https://kubernetes.io/docs/concepts/services-networking/ingress/
 * TLS secret - https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
 * Nginx ingress TLS setup - https://kubernetes.github.io/ingress-nginx/user-guide/tls/
-
-// todo(knabben) - Example of Ingress TLS setup
 
 ### Protect node metadata and endpoints
 
@@ -442,7 +535,6 @@ services                                        []                  [heapster]  
 SHA512 - https://github.com/kubernetes/kubernetes/releases
 
 ```
-Fetch the same 
 wget https://dl.k8s.io/v1.19.1/kubernetes-server-linux-amd64.tar.gz
 tar zxvf kubernetes-server-linux-amd64.tar.gz
 ```
