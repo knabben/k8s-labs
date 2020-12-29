@@ -443,16 +443,64 @@ $ kubectl exec a -- /agnhost connect a.team-a:80 --timeout=2s  # OK
 6. [Allow traffic from a NS](https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/06-allow-traffic-from-a-namespace.md)
 
 ```
+$ kubectl label namespace/team-a purpose=production
+$ kubectl create -f web-allow-prod.yaml
+...
+spec:
+  podSelector:
+    matchLabels:
+      pod: a
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          purpose: production
+...
+```
+
+Remove the label from the namespace and you will have a timeout.
+
+```
+$ kubectl label ns team-a purpose-
+$ kubectl exec -n team-a a -- /agnhost connect a.default:80 --timeout=2s
+TIMEOUT
 ```
 
 7. [Allow traffic from some pods](https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/07-allow-traffic-from-some-pods-in-another-namespace.md)
 
+Label the correct pods and namespaces from the ingress rule
+
 ```
+$ kubectl create -f web-allow-all-ns-mon.yaml
+$ kubectl label ns team-a team=operations
+$ kubectl label pod/a -n team-a type=monitoring
+```
+
+a.team-a can access a.default, but b.team-a cannot.
+
+``` 
+$ kubectl exec -n team-a a -- /agnhost connect a.default:80 --timeout=2s  # OK
+$ kubectl exec -n team-a b -- /agnhost connect a.default:80 --timeout=2s  # FAIL
+TIMEOUT
 ```
 
 8. [Allow external clients](https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/08-allow-external-traffic.md) 
 
+Allow external clients as well.
+
+```
+spec:
+  podSelector:
+    matchLabels:
+      pod: a
+  ingress:
+  - from: []
+```
+
 9. [Allow traffic only to a port](https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/09-allow-traffic-only-to-a-port.md)
+
+```
+```
 
 10. [Allow traffic with multi-selector](https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/10-allowing-traffic-with-multiple-selectors.md)
 
@@ -545,3 +593,4 @@ Upgrade with Kubeadm - https://github.com/knabben/k8s-labs/tree/main/cluster#kub
 * https://killer.sh/
 * [Learn Kubernetes Security](https://www.amazon.com/Learn-Kubernetes-Security-orchestrate-microservices-ebook/dp/B087Q9G51R)
 * [Kubernetes Security](https://kubernetes-security.info/)
+* [Kubernetes Simulator](https://github.com/kubernetes-simulator/simulator)
