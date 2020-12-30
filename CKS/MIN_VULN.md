@@ -87,7 +87,7 @@ Multiple containers can have different settings and profiles.
 
 // todo(knabben) psp example with RBAC on a namespace
 
-#### Manage Kubernetes secrets
+### Manage Kubernetes secrets
 
 base64 data foo and ETCD encryption
 

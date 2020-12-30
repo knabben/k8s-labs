@@ -2,11 +2,30 @@
 
 ### Perform behavioral analytics of syscall process and file activities at the host and container level to detect malicious activies
 
-// todo(knabben) - add more falco debugging examples
-// install on worker - KIND, find rules, define a specific scenario, formatting - more options
+Create a new rule on Falco on `/etc/falco/falco_rules.local.yaml`
+```
+- macro: container
+  condition: container.id != host
+
+- macro: spawned_process
+  condition: evt.type = execve and evt.dir=<
+
+- rule: run_shell_in_container
+  desc: a shell was spawned by a non-shell program in a container. Container entrypoints are excluded.
+  condition: container and proc.name = bash
+  output: "Shell spawned (%user.name,container_id=%container.id)"
+  priority: WARNING
+```
+
+You should see the following logs:
+
+```
+21:46:10.887392293: Notice A shell was spawned in a container with an attached terminal (user=root user_loginuid=-1 <NA> (id=3d9b3f12ef50) shell=bash parent=runc cmdline=bash terminal=34816 container_id=3d9b3f12ef50 image=<NA>)
+21:46:11.008102763: Warning Shell spawned (root,container_id=3d9b3f12ef50)
+```
 
 * [Falco](https://falco.org/docs/)
-* https://www.youtube.com/watch?v=fRoTKqH3rHI - Falco TGIK
+* [Falco TGIK](https://www.youtube.com/watch?v=fRoTKqH3rHI)
 
 ### Detect threats within physical infrastructure, apps, networks, data, users and workloads
 
@@ -21,39 +40,51 @@ Some vectors:
 
 ### Perform deep analytics investigation and identification of bad actors whitin environment
 
-* syscall analysis - https://docs.sysdig.com/?lang=en
-* https://kubernetes.io/blog/2015/11/monitoring-kubernetes-with-sysdig/
+Install sysdig standalone and run on the host:
 
 ```
-|18:41:08|root@buster:[simulator]> strace -cw ls
-attack		      cmd		  CONTRIBUTING.md  go.mod   Jenkinsfile		launch-files  main.go	prelude.mk  security.txt	terraform
-bin		      code-of-conduct.md  Dockerfile	   go.sum   kubesim		lib	      Makefile	README.md   setup		test
-clairctl-linux-amd64  CODEOWNERS	  docs		   HELP.md  launch-environment	LICENSE       pkg	scripts     simulation-scripts	tools
+curl -s https://download.sysdig.com/DRAIOS-GPG-KEY.public | apt-key add -
+curl -s -o /etc/apt/sources.list.d/draios.list http://download.sysdig.com/stable/deb/draios.list
+apt-get update && apt-get install sysdig
+```
+
+In one terminal run:
+
+```
+$ while true; do cat  /etc/passwd; sleep 1; done
+```
+
+Find the syscall made by `cat` using `sysdig`:
+```
+sysdig proc.name=cat and evt.type=openat -p "%evt.info | %proc.name"
+...
+fd=3(<f>/etc/passwd) dirfd=-100(AT_FDCWD) name=/etc/passwd flags=1(O_RDONLY) mode=0 dev=801  | cat
+...
+```
+
+It's possible to use strace and summarize the options as well:
+
+```
+root@hackbox:/etc/falco# strace -p 839438 -wc
+strace: Process 839438 attached
+^Cstrace: Process 839438 detached
 % time     seconds  usecs/call     calls    errors syscall
 ------ ----------- ----------- --------- --------- ----------------
- 44.14    0.006052        2017         3           write
- 14.84    0.002035          81        25           mmap
-  5.98    0.000821          91         9           mprotect
-  5.88    0.000806          80        10           fstat
-  5.73    0.000786          71        11           close
-  5.64    0.000774          85         9           openat
-  4.11    0.000564          80         7           read
-  2.55    0.000350         349         1           execve
-  1.58    0.000216         108         2         2 statfs
-  1.51    0.000207          68         3           brk
-  1.20    0.000165          82         2           getdents64
-  1.20    0.000164          82         2         2 access
-  1.04    0.000142          71         2           ioctl
-  1.04    0.000142          70         2           rt_sigaction
-  0.88    0.000121         120         1           munmap
-  0.64    0.000088          87         1           rt_sigprocmask
-  0.52    0.000072          71         1           set_tid_address
-  0.51    0.000070          70         1           prlimit64
-  0.51    0.000070          69         1           arch_prctl
-  0.50    0.000069          69         1           set_robust_list
+ 99.93    3.366340      187018        18           select
+  0.03    0.001046          19        53           clock_gettime
+  0.02    0.000583          16        36           rt_sigprocmask
+  0.01    0.000487          54         9           write
+  0.01    0.000211          23         9           read
+  0.00    0.000065          16         4           getpid
+  0.00    0.000020          20         1           ioctl
 ------ ----------- ----------- --------- --------- ----------------
-100.00    0.013713                    94         4 total
+100.00    3.368753                   130           total
 ```
+
+References:
+
+* syscall analysis - https://docs.sysdig.com/
+* https://kubernetes.io/blog/2015/11/monitoring-kubernetes-with-sysdig/
 
 ### Ensure immutability of containers at runtime
 
@@ -62,10 +93,16 @@ clairctl-linux-amd64  CODEOWNERS	  docs		   HELP.md  launch-environment	LICENSE 
 securityContext:
   readOnlyRootFilesystem: true
 ```
+
 ### Use Audit logs to monitor access
+
+audit audit audit
+// todo(knabben) Configure audit logging with more detailing
+// level / userGroup / resources
+
+
+References:
 
 * https://kubernetes.io/docs/tasks/debug-application-cluster/audit/
 * https://github.com/knabben/kube-audit
 
-// todo(knabben) Configure audit logging with more detailing
-// level / userGroup / resources 
