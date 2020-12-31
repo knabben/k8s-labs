@@ -49,20 +49,14 @@ Two API HTTP ports are available, and only the secure MUST be available:
 
 ### Use RBAC to minimize exposure
 
-
-
-# Authorization
-
 https://blog.styra.com/blog/why-rbac-is-not-enough-for-kubernetes-api-security
 
-After the request is authenticated as coming from a specific user, the request must be authorized.
-ABAC / RBAC
+After the request is authenticated as coming from a specific user, the request must be authorized.  
 
-# RBAC
+ABAC / RBAC
 
 The RBAC API declares four kinds of Kubernetes object: Role, ClusterRole, RoleBinding and ClusterRoleBinding.
 You can describe objects, or amend them, using tools such as kubectl, just like any other Kubernetes object.
-
 
 ### Role and Cluster Role
 
