@@ -28,11 +28,83 @@ attributes of pod specification relevant to security.
 
 To enable the PSP we must enable the admission plugin in the [kube-apiserver](psp/kube-apiserver-psp.yaml) manifest.
 
-NOTE: Add a PSP before enabling the admission plugin
+The policy can be enforced to a specific user or SA via RBAC, generate PSP from your environment with `kube-psp-advisor`:
 
-The policy can be enforced to a specific user or SA via RBAC:
+```
+$ kubectl advise-psp inspect
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  creationTimestamp: null
+  name: pod-security-policy-all-20201231015616
+spec:
+  allowedCapabilities:
+  - NET_ADMIN
+  allowedHostPaths:
+  - pathPrefix: /etc/cni/net.d
+    readOnly: true
+  - pathPrefix: /run/xtables.lock
+    readOnly: true
+  - pathPrefix: /lib/modules
+    readOnly: true
+  fsGroup:
+    rule: RunAsAny
+  hostNetwork: true
+  hostPorts:
+  - max: 0
+    min: 0
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - hostPath
+  - secret
+  - configMap
+```
 
-// todo(knabben) bring RBAC sa here with PSP
+Create a namespace and a serviceaccount under it:
+
+```
+$ kubectl create -f psp-example.yaml
+...
+privileged: false
+...
+
+$ kubectl create namespace psp
+$ kubectl create serviceaccount -n psp psp-account
+
+$ kubectl create -n psp role psp --verb=use --resource=podsecuritypolicy --resource-name=example  # example - PodSecurityPolicy resource
+$ kubectl create rolebinding -n psp pspbinding --role=psp --serviceaccount=psp:psp-account
+$ kubectl create rolebinding -n psp fake-editor --clusterrole=edit --serviceaccount=psp:psp-account 
+```
+
+Create a new Pod with the service account:
+
+```
+$ kubectl auth can-i use podsecuritypolicy/example --as=system:serviceaccount:psp:psp-account
+yes
+...
+$ kubectl --as=system:serviceaccount:psp:psp-account -n psp create -f- <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged
+spec:
+  containers:
+    - name: pause
+      image: k8s.gcr.io/pause
+      securityContext:
+        privileged: true
+EOF
+
+Error from server (Forbidden): error when creating "STDIN": pods "privileged" is forbidden: PodSecurityPolicy: unable to admit pod: [spec.containers[0].securityContext.privileged: Invalid value: true: Privileged containers are not allowed]
+```
+
+The Policy is applied to this new Service account. 
 
 References:
 
