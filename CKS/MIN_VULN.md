@@ -30,15 +30,16 @@ To enable the PSP we must enable the admission plugin in the [kube-apiserver](ps
 
 NOTE: Add a PSP before enabling the admission plugin
 
+The policy can be enforced to a specific user or SA via RBAC:
+
+// todo(knabben) bring RBAC sa here with PSP
+
+References:
+
 * https://kubernetes.io/docs/concepts/policy/pod-security-policy/
-* https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#podsecuritypolicy-v1beta1-policy
-
-The policy can be enforced to a specific user or SA via RBAC.
-
-*Other references:*
-
 * [kube-psp-advisor](https://github.com/sysdiglabs/kube-psp-advisor) - This tool from sysdig can inspect and report PSP based on your current environment.
 * [Chapter 8](https://github.com/PacktPublishing/Learn-Kubernetes-Security/tree/master/chapter08) - Learn Kubernetes Security
+* https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#podsecuritypolicy-v1beta1-policy
 
 #### OPA - *Open Policy Agent*
 
@@ -82,21 +83,67 @@ Security context settings include:
 
 Multiple containers can have different settings and profiles.
 
+References: 
+
 * https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
 * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#podsecuritycontext-v1-core
 
-// todo(knabben) psp example with RBAC on a namespace
-
 ### Manage Kubernetes secrets
 
-base64 data foo and ETCD encryption
+To encrypt the key under the etcd storage, enable it on the API-server:
+
+```
+  - --encryption-provider-config=/etc/kubernetes/secrets.yaml
+
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+    - secrets
+    providers:
+    - aescbc:
+        keys:
+        - name: key1
+          secret: Fug86VEqS5eNMdI+Q8v0qEy7jLmhC+qa9aSkIPro3LU= 
+    - identity: {}
+```
+
+Create a secret on your cluster and consume from etcd:
+
+```
+$ kubectl create secret generic secret1 -n default --from-literal=mykey=data
+
+$ ETCDCTL_API=3 etcdctl get /registry/secrets/default/secret1 | hexdump -C
+00000000  2f 72 65 67 69 73 74 72  79 2f 73 65 63 72 65 74  |/registry/secret|
+00000010  73 2f 64 65 66 61 75 6c  74 2f 73 65 63 72 65 74  |s/default/secret|
+00000020  31 0a 6b 38 73 3a 65 6e  63 3a 61 65 73 63 62 63  |1.k8s:enc:aescbc|
+00000030  3a 76 31 3a 61 3a a0 41  44 7d 19 48 a1 7a 63 2e  |:v1:a:.AD}.H.zc.|
+00000040  77 f9 b2 48 22 5e 74 9e  48 80 b4 c1 33 32 7d fa  |w..H"^t.H...32}.|
+00000050  af 1a e1 70 41 b0 98 5e  cf 89 d5 9d 1d a6 76 45  |...pA..^......vE|
+00000060  33 ce 10 72 2c 76 59 a2  fa e9 f0 6a bd bf 35 1a  |3..r,vY....j..5.|
+00000070  71 40 00 e9 25 27 50 0d  8c 3f b7 01 bb c8 d6 3e  |q@..%'P..?.....>|
+00000080  9a d7 f2 bf 70 62 e3 c8  80 fa d0 89 a5 dc c8 bf  |....pb..........|
+00000090  59 11 98 b6 69 89 63 0e  da 08 10 85 ce 27 d9 b5  |Y...i.c......'..|
+000000a0  54 b9 f9 d5 61 fe 85 17  0f 36 01 f8 f8 c6 7c 89  |T...a....6....|.|
+000000b0  50 04 6b 07 ff 38 08 c6  2d 04 14 31 d2 9f 13 94  |P.k..8..-..1....|
+000000c0  72 0e 2b c0 71 1b e8 79  d4 57 cd 37 9e af f7 f3  |r.+.q..y.W.7....|
+000000d0  ce 42 52 58 c3 46 04 f4  c5 89 e1 eb 96 9f 86 95  |.BRX.F..........|
+000000e0  c2 58 66 68 a7 47 f6 f0  75 ee f8 a4 2f 2b 71 49  |.Xfh.G..u.../+qI|
+000000f0  a1 af a3 20 e0 90 44 4a  c4 5e 88 a9 31 b1 18 87  |... ..DJ.^..1...|
+00000100  93 b2 3c 34 37 59 23 9f  18 80 22 d8 91 bf d4 bf  |..<47Y#...".....|
+00000110  09 f4 b0 35 fb 26 57 89  57 1a b1 98 e4 ba 35 59  |...5.&W.W.....5Y|
+00000120  2a 13 67 7c 5e 88 5d 37  e9 19 2c 57 17 0e db cf  |*.g|^.]7..,W....|
+00000130  e2 fd 7b f7 ff 37 0a                              |..{..7.|
+00000137
+```
+
+References:
 
 * https://kubernetes.io/docs/concepts/configuration/secret/
 * https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/
 * https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-config-file/
-  https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
+* https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
 
-// todo(knabben) encryption on data example
 
 ### Use container runtime sandboxes in multi-tenant environments (gvisor, kata containers)
 
