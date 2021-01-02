@@ -201,4 +201,4 @@ References:
 
 * https://kubernetes.io/docs/tasks/debug-application-cluster/audit/
 * Blockchain Audit Experiment - https://github.com/knabben/kube-audit
-
+* https://www.datadoghq.com/blog/key-kubernetes-audit-logs-for-monitoring-cluster-security/
